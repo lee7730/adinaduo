@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title> Question for You</title>
+  <style>
+    :root { --bg: #0b0f19; --card:#121a2a; --text:#eaf0ff; --muted:#a7b2d6; }
+    body{
+      margin:0; min-height:100vh; display:grid; place-items:center;
+      background: radial-gradient(1200px 700px at 20% 20%, #2b145a 0%, var(--bg) 55%),
+                  radial-gradient(900px 600px at 80% 60%, #7a1530 0%, transparent 55%),
+                  var(--bg);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+    }
+    .card{
+      width:min(560px, 92vw);
+      background: color-mix(in oklab, var(--card) 90%, black);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:18px;
+      padding:28px 22px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.45);
+      text-align:center;
+    }
+    h1{ margin:0 0 8px; font-size:clamp(26px, 4vw, 34px); }
+    p{ margin:0 0 18px; color:var(--muted); }
+    .stage{
+      position:relative;
+      height:140px;
+      border-radius:14px;
+      background: rgba(255,255,255,.03);
+      border:1px dashed rgba(255,255,255,.12);
+      overflow:hidden;
+      display:grid;
+      place-items:center;
+    }
+    .buttons{
+      position:relative;
+      width:100%;
+      height:100%;
+    }
+    button{
+      position:absolute;
+      padding:12px 18px;
+      font-size:18px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      color:var(--text);
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform .12s ease, background .12s ease;
+    }
+    #yes{
+      left: 32%;
+      top: 40%;
+      background: linear-gradient(135deg, #ff3b8d, #ff7a3b);
+      font-weight:700;
+    }
+    #yes:hover{ transform: scale(1.04); }
+    #no{
+      left: 58%;
+      top: 40%;
+      background: rgba(255,255,255,.06);
+    }
+    .result{
+      margin-top:16px;
+      font-size:18px;
+      min-height:24px;
+    }
+    .tiny{ margin-top:10px; font-size:12px; color:rgba(255,255,255,.45); }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Will you get on valorant? 💘</h1>
+    <p>Choose wisely 😌</p>
+
+    <div class="stage" id="stage">
+      <div class="buttons">
+        <button id="yes" type="button">Yes 💖</button>
+        <button id="no" type="button" aria-label="No">No 😅</button>
+      </div>
+    </div>
+
+    <div class="result" id="result"></div>
+  </main>
+
+ <script>
+  const stage = document.getElementById("stage");
+  const noBtn  = document.getElementById("no");
+  const yesBtn = document.getElementById("yes");
+  const result = document.getElementById("result");
+
+  // --- Counter UI ---
+  const counterEl = document.createElement("div");
+  counterEl.style.marginTop = "12px";
+  counterEl.style.fontSize = "14px";
+  counterEl.style.color = "rgba(255,255,255,.65)";
+  counterEl.textContent = "No attempts: 0";
+  result.parentNode.insertBefore(counterEl, result);
+
+  let noAttempts = 0;
+
+  const noPhrases = [
+    "No 😅",
+    "Nope 🙅‍♀️",
+    "Really? 🤨",
+    "Try again 😈",
+    "Not happening 😂",
+    "Nice try 😌",
+    "You sure? 😭",
+    "Pick Yes 😇"
+  ];
+
+  function updateCounter() {
+    counterEl.textContent = `No attempts: ${noAttempts}`;
+    noBtn.textContent = noPhrases[Math.min(noAttempts, noPhrases.length - 1)];
+  }
+
+  // --- Keep No button inside stage + move randomly ---
+  function moveNoButton() {
+    const stageRect = stage.getBoundingClientRect();
+    const btnRect = noBtn.getBoundingClientRect();
+
+    const pad = 6;
+    const maxX = stageRect.width  - btnRect.width  - pad * 2;
+    const maxY = stageRect.height - btnRect.height - pad * 2;
+
+    const x = Math.random() * Math.max(0, maxX) + pad;
+    const y = Math.random() * Math.max(0, maxY) + pad;
+
+    noBtn.style.left = `${x}px`;
+    noBtn.style.top  = `${y}px`;
+  }
+
+  // --- Confetti ---
+  function confettiBurst(count = 140) {
+    // create an overlay that doesn't block clicks
+    const overlay = document.createElement("div");
+    overlay.style.position = "fixed";
+    overlay.style.inset = "0";
+    overlay.style.pointerEvents = "none";
+    overlay.style.overflow = "hidden";
+    document.body.appendChild(overlay);
+
+    const originX = window.innerWidth / 2;
+    const originY = window.innerHeight * 0.35;
+
+    for (let i = 0; i < count; i++) {
+      const piece = document.createElement("div");
+      piece.style.position = "absolute";
+      piece.style.left = `${originX}px`;
+      piece.style.top  = `${originY}px`;
+      piece.style.width = `${6 + Math.random() * 6}px`;
+      piece.style.height = `${8 + Math.random() * 10}px`;
+      piece.style.borderRadius = "2px";
+      piece.style.background = `hsl(${Math.random() * 360}, 90%, 60%)`;
+      piece.style.opacity = "0.95";
+      piece.style.transform = `translate(-50%, -50%) rotate(${Math.random() * 360}deg)`;
+
+      const dx = (Math.random() - 0.5) * 900;     // horizontal spread
+      const dy = (Math.random() - 0.8) * 900;     // mostly upward
+      const spin = (Math.random() - 0.5) * 720;
+      const duration = 900 + Math.random() * 700;
+
+      piece.animate(
+        [
+          { transform: `translate(-50%, -50%) translate(0px,0px) rotate(0deg)`, opacity: 1 },
+          { transform: `translate(-50%, -50%) translate(${dx}px,${dy}px) rotate(${spin}deg)`, opacity: 1, offset: 0.65 },
+          { transform: `translate(-50%, -50%) translate(${dx}px,${dy + 700}px) rotate(${spin * 1.2}deg)`, opacity: 0 }
+        ],
+        { duration, easing: "cubic-bezier(.15,.9,.2,1)", fill: "forwards" }
+      );
+
+      overlay.appendChild(piece);
+    }
+
+    // cleanup
+    setTimeout(() => overlay.remove(), 2200);
+  }
+
+  // --- Events: No dodges + counts attempts ---
+  function registerNoAttempt() {
+    noAttempts++;
+    updateCounter();
+    moveNoButton();
+  }
+
+  noBtn.addEventListener("mouseenter", registerNoAttempt);
+  noBtn.addEventListener("pointerenter", registerNoAttempt);
+
+  // On mobile, they’ll try to tap it — dodge + prevent click
+  noBtn.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    registerNoAttempt();
+  });
+
+  // --- Yes wins ---
+  yesBtn.addEventListener("click", () => {
+    confettiBurst();
+    result.textContent = "YESS! You’re officially my duo.";
+    yesBtn.disabled = true;
+    noBtn.disabled = true;
+    noBtn.style.opacity = 0.35;
+    counterEl.style.fontWeight = "600";
+    counterEl.textContent = `She tried ${noAttempts} time${noAttempts === 1 ? "" : "s"} to press No 😭`;
+  });
+
+  // initial placement
+  updateCounter();
+  moveNoButton();
+</script>
+
+</body>
+</html>
